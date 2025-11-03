@@ -1,0 +1,8 @@
+{
+  "name": "NotifyEdu_.School",
+  "description": "A progressive web application for schools to manage student attendance via manual entry or QR code scanning, with real-time WhatsApp notifications for parents and a dedicated portal for students to view their analytics.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
