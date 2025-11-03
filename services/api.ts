@@ -1,6 +1,6 @@
 import { dbSeed, DB } from './dbSeed';
-// FIX: Added ClassName, ClassRoutineEntry to imports to be used in new methods.
-import { User, School, Student, Guard, Teacher, UserType, AttendanceLog, Complaint, ComplaintStatus, Message, Announcement, AttendanceStatus, AttendanceMode, ContactInfo, FooterInfo, StudentAnalytics, ClassName, ClassRoutineEntry } from '../types';
+// FIX: Added PaymentProof, PaymentProofStatus to imports to be used in new methods.
+import { User, School, Student, Guard, Teacher, UserType, AttendanceLog, Complaint, ComplaintStatus, Message, Announcement, AttendanceStatus, AttendanceMode, ContactInfo, FooterInfo, StudentAnalytics, ClassName, ClassRoutineEntry, PaymentProof, PaymentProofStatus } from '../types';
 
 const DB_KEY = 'notifyedu_db';
 const TOKEN_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
@@ -327,6 +327,53 @@ class ApiService {
         return this.simulate(student);
     }
     
+    // FIX: Added method to get payment proofs for a school.
+    async getPaymentProofs(schoolId: string, token: string): Promise<PaymentProof[]> {
+        validateToken(token, UserType.School);
+        const proofs = this.db.paymentProofs.filter(p => p.school_id === schoolId);
+        return this.simulate(proofs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
+    }
+
+    // FIX: Added method to approve a payment proof.
+    async approvePaymentProof(token: string, proofId: string): Promise<PaymentProof> {
+        const { userId: schoolId } = validateToken(token, UserType.School)!;
+        
+        const proof = this.db.paymentProofs.find(p => p.proof_id === proofId);
+        if (!proof || proof.school_id !== schoolId) {
+            throw new Error("Payment proof not found or access denied.");
+        }
+        if (proof.status !== PaymentProofStatus.PENDING) {
+            throw new Error("This proof has already been processed.");
+        }
+
+        proof.status = PaymentProofStatus.APPROVED;
+
+        const student = this.db.students.find(s => s.student_id === proof.student_id);
+        if (student) {
+            student.fees_paid = (student.fees_paid || 0) + proof.amount;
+        }
+
+        this.saveDb();
+        return this.simulate(proof);
+    }
+
+    // FIX: Added method to reject a payment proof.
+    async rejectPaymentProof(token: string, proofId: string): Promise<PaymentProof> {
+        const { userId: schoolId } = validateToken(token, UserType.School)!;
+        
+        const proof = this.db.paymentProofs.find(p => p.proof_id === proofId);
+        if (!proof || proof.school_id !== schoolId) {
+            throw new Error("Payment proof not found or access denied.");
+        }
+        if (proof.status !== PaymentProofStatus.PENDING) {
+            throw new Error("This proof has already been processed.");
+        }
+
+        proof.status = PaymentProofStatus.REJECTED;
+        this.saveDb();
+        return this.simulate(proof);
+    }
+
     async getComplaints(schoolId: string, token: string): Promise<Complaint[]> {
         validateToken(token, UserType.School);
         const studentIds = new Set(this.db.students.filter(s => s.school_id === schoolId).map(s => s.student_id));
@@ -389,6 +436,16 @@ class ApiService {
         if(!school) throw new Error("School not found");
         Object.assign(school, data);
         this.saveDb();
+        return this.simulate(school);
+    }
+
+    // FIX: Added method to get a school's details by ID.
+    async getSchoolById(schoolId: string, token: string): Promise<School> {
+        validateToken(token);
+        const school = this.db.schools.find(s => s.id === schoolId);
+        if (!school) {
+            throw new Error("School not found.");
+        }
         return this.simulate(school);
     }
 
@@ -503,6 +560,31 @@ class ApiService {
         const dateStr = new Date(date).toDateString();
         const logs = this.db.attendanceLogs.filter(l => l.entity_id === studentId && l.entity_type === 'student' && new Date(l.timestamp).toDateString() === dateStr);
         return this.simulate(logs);
+    }
+
+    // FIX: Added method for students to submit payment proofs.
+    async submitPaymentProof(token: string, studentId: string, proofData: Omit<PaymentProof, 'proof_id' | 'school_id' | 'student_id' | 'student_name' | 'timestamp' | 'status'>): Promise<PaymentProof> {
+        validateToken(token, UserType.Student);
+        const student = this.db.students.find(s => s.student_id === studentId);
+        if (!student) {
+            throw new Error("Student not found.");
+        }
+
+        const newProof: PaymentProof = {
+            proof_id: `proof_${Date.now()}_${Math.random()}`,
+            school_id: student.school_id,
+            student_id: student.student_id,
+            student_name: student.name,
+            amount: proofData.amount,
+            payer_name: proofData.payer_name,
+            transaction_id: proofData.transaction_id,
+            timestamp: new Date().toISOString(),
+            status: PaymentProofStatus.PENDING,
+        };
+
+        this.db.paymentProofs.unshift(newProof);
+        this.saveDb();
+        return this.simulate(newProof);
     }
 
     // --- Guard Methods ---

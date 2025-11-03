@@ -300,7 +300,7 @@ const SchoolDashboard: React.FC = () => {
       case 'attendance':
         return <AttendanceManager students={students} logs={logs} onAttendanceMarked={handleAttendanceMarked} showToast={showToast} school={schoolUser} />;
       case 'fees':
-        return <FeesManager students={students} onUpdate={fetchStudents} showToast={showToast} />;
+        return <FeesManager students={students} onUpdateStudents={fetchStudents} onUpdateSchool={handleSettingsUpdated} showToast={showToast} school={schoolUser} />;
       case 'complaints':
         return <ComplaintsManager />;
       case 'announcements':

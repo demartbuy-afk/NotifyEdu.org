@@ -12,6 +12,7 @@ import { pushService } from '../../services/pushService';
 import DownloadStudentReportModal from './DownloadStudentReportModal';
 import { downloadCSV } from '../../utils/csv';
 import ClassRoutineViewer from './ClassRoutineViewer';
+import PayFeeModal from './PayFeeModal';
 
 const StudentDashboard: React.FC = () => {
     const { user } = useAuth();
@@ -19,6 +20,7 @@ const StudentDashboard: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isDownloadModalOpen, setDownloadModalOpen] = useState(false);
+    const [isPayFeeModalOpen, setIsPayFeeModalOpen] = useState(false);
     const [toastMessage, setToastMessage] = useState<string>('');
 
     const studentUser = user as Student;
@@ -48,6 +50,12 @@ const StudentDashboard: React.FC = () => {
         // Ask for push notification permission on load
         pushService.subscribeUser(studentUser.id);
     }, [fetchData, studentUser.id]);
+
+    const handlePaymentSuccess = () => {
+        setIsPayFeeModalOpen(false);
+        showToast("Payment proof submitted successfully for verification.");
+        fetchData(); // Refresh analytics to show updated fee status eventually
+    };
     
     const handleDownloadReport = async () => {
         if (!user) return;
@@ -153,7 +161,7 @@ const StudentDashboard: React.FC = () => {
                         <ComplaintBox studentId={studentUser.id} token={studentUser.token} />
                     </div>
                     <div className="space-y-8">
-                        <FeeStatusCard student={studentUser} />
+                        <FeeStatusCard student={studentUser} onPayNow={() => setIsPayFeeModalOpen(true)} />
                         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
                             <h3 className="text-xl font-bold text-neutral dark:text-gray-200 mb-4">Quick Actions</h3>
                             <div className="space-y-3">
@@ -177,6 +185,14 @@ const StudentDashboard: React.FC = () => {
                     isOpen={isDownloadModalOpen}
                     onClose={() => setDownloadModalOpen(false)}
                     onDownload={handleDownloadReport}
+                />
+            )}
+            {isPayFeeModalOpen && (
+                <PayFeeModal
+                    isOpen={isPayFeeModalOpen}
+                    onClose={() => setIsPayFeeModalOpen(false)}
+                    student={studentUser}
+                    onSuccess={handlePaymentSuccess}
                 />
             )}
             {toastMessage && (

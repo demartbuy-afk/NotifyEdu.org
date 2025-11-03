@@ -40,6 +40,7 @@ export interface School extends User {
   password?: string; // Only available on creation
   opening_time?: string; // e.g., "09:00"
   closing_time?: string; // e.g., "16:00"
+  payment_qr_code_base64?: string;
 }
 
 export interface Student extends User {
@@ -136,6 +137,7 @@ export interface NavLink {
 export interface FooterInfo {
     navLinks: NavLink[];
     email: string;
+    phone: string;
     copyright: string;
 }
 
@@ -156,4 +158,22 @@ export interface ClassRoutineEntry {
   end_time: string; // "HH:MM"
   subject: string;
   teacher_id: string;
+}
+
+export enum PaymentProofStatus {
+    PENDING = 'PENDING',
+    APPROVED = 'APPROVED',
+    REJECTED = 'REJECTED',
+}
+
+export interface PaymentProof {
+    proof_id: string;
+    school_id: string;
+    student_id: string;
+    student_name: string;
+    amount: number;
+    payer_name: string;
+    transaction_id: string;
+    timestamp: string;
+    status: PaymentProofStatus;
 }

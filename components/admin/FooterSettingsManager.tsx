@@ -9,7 +9,7 @@ interface FooterSettingsManagerProps {
 
 const FooterSettingsManager: React.FC<FooterSettingsManagerProps> = ({ showToast }) => {
     const { user } = useAuth();
-    const [footerInfo, setFooterInfo] = useState<FooterInfo>({ navLinks: [], email: '', copyright: ''});
+    const [footerInfo, setFooterInfo] = useState<FooterInfo>({ navLinks: [], email: '', phone: '', copyright: ''});
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
@@ -30,6 +30,7 @@ const FooterSettingsManager: React.FC<FooterSettingsManagerProps> = ({ showToast
                             { title: 'Contact', href: '#contact' },
                         ],
                         email: 'help@notifyedu.com',
+                        phone: '+91 99999 88888',
                         copyright: '© {year} NotifyEdu. All rights reserved.',
                     });
                 }
@@ -113,9 +114,15 @@ const FooterSettingsManager: React.FC<FooterSettingsManagerProps> = ({ showToast
 
                 {/* Contact and Copyright */}
                  <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg space-y-4">
-                     <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Email</label>
-                        <input type="email" name="email" id="email" value={footerInfo.email} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-primary focus:border-primary" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                           <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Email</label>
+                           <input type="email" name="email" id="email" value={footerInfo.email} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-primary focus:border-primary" />
+                        </div>
+                        <div>
+                           <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Phone</label>
+                           <input type="tel" name="phone" id="phone" value={footerInfo.phone} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-primary focus:border-primary" />
+                        </div>
                      </div>
                      <div>
                         <label htmlFor="copyright" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Copyright Text</label>

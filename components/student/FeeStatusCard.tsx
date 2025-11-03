@@ -3,13 +3,14 @@ import { Student } from '../../types';
 
 interface FeeStatusCardProps {
   student: Student;
+  onPayNow: () => void;
 }
 
-const FeeStatusCard: React.FC<FeeStatusCardProps> = ({ student }) => {
+const FeeStatusCard: React.FC<FeeStatusCardProps> = ({ student, onPayNow }) => {
   const totalFees = student.total_fees ?? 0;
   const feesPaid = student.fees_paid ?? 0;
   const balance = totalFees - feesPaid;
-  const percentagePaid = totalFees > 0 ? Math.round((feesPaid / totalFees) * 100) : 100;
+  const percentagePaid = totalFees > 0 ? Math.round((feesPaid / totalFees) * 100) : (feesPaid > 0 ? 100 : 0);
 
   const getStatusInfo = () => {
     if (totalFees <= 0) {
@@ -28,11 +29,18 @@ const FeeStatusCard: React.FC<FeeStatusCardProps> = ({ student }) => {
 
   return (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold text-neutral dark:text-gray-200">Fee Status</h2>
-        <span className={`px-3 py-1 text-xs font-semibold rounded-full ${statusInfo.color}`}>
-          {statusInfo.text}
-        </span>
+      <div className="flex justify-between items-start mb-4">
+        <div>
+            <h2 className="text-2xl font-bold text-neutral dark:text-gray-200">Fee Status</h2>
+            <span className={`mt-1 px-3 py-1 text-xs font-semibold rounded-full ${statusInfo.color}`}>
+              {statusInfo.text}
+            </span>
+        </div>
+        {balance > 0 && (
+            <button onClick={onPayNow} className="px-4 py-2 text-sm font-semibold text-white bg-primary rounded-lg shadow-md hover:bg-primary-hover">
+                Pay Now
+            </button>
+        )}
       </div>
       
       <div className="space-y-4">

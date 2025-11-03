@@ -1,4 +1,4 @@
-import { School, Student, User, UserType, Guard, Teacher, AttendanceLog, Complaint, Message, Announcement, ContactInfo, AttendanceStatus, AttendanceMode, ComplaintStatus, LoginAttempt, FooterInfo, ClassRoutineEntry } from '../types';
+import { School, Student, User, UserType, Guard, Teacher, AttendanceLog, Complaint, Message, Announcement, ContactInfo, AttendanceStatus, AttendanceMode, ComplaintStatus, LoginAttempt, FooterInfo, ClassRoutineEntry, PaymentProof } from '../types';
 
 export interface DB {
   schools: School[];
@@ -11,6 +11,7 @@ export interface DB {
   messages: Message[];
   announcements: Announcement[];
   classRoutines: ClassRoutineEntry[];
+  paymentProofs: PaymentProof[];
   contactInfo: ContactInfo;
   footerInfo: FooterInfo;
   locationQrValue: string;
@@ -106,6 +107,7 @@ export const dbSeed = (): DB => {
         { announcement_id: 'ann1', school_id: schoolId, title: 'Annual Sports Day', content: 'The Annual Sports Day will be held on the 25th of this month. All students are requested to participate.', timestamp: new Date().toISOString() }
     ],
     classRoutines: [],
+    paymentProofs: [],
     contactInfo: {
         title: 'Register Your School',
         description: 'To get started with NotifyEdu, please contact our support team. We will guide you through the setup process and provide your school\'s administrative credentials.',
@@ -116,9 +118,11 @@ export const dbSeed = (): DB => {
         navLinks: [
             { title: 'Features', href: '#features' },
             { title: 'How It Works', href: '#how-it-works' },
+            { title: 'Teachers', href: '/teacher-portal' },
             { title: 'Contact', href: '#contact' },
         ],
         email: 'helpnotifyedu@gmail.com',
+        phone: '+91 99999 88888',
         copyright: '© {year} NotifyEdu. All rights reserved.',
     },
     locationQrValue: 'SCHOOL_GATE_QR_CHECK_IN_V1',

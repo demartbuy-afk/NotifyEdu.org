@@ -24,6 +24,7 @@ const Footer: React.FC = () => {
                         { title: 'Contact', href: '#contact' },
                     ],
                     email: 'support@notifyedu.com',
+                    phone: '+91 99999 88888',
                     copyright: '© {year} NotifyEdu. All rights reserved.'
                 });
             } finally {
@@ -91,9 +92,14 @@ const Footer: React.FC = () => {
                         {/* Contact */}
                         <div className="space-y-4">
                              <h4 className="font-semibold text-neutral dark:text-gray-200 uppercase tracking-wider">Get In Touch</h4>
-                             <p className="text-sm">
-                                <a href={`mailto:${footerInfo?.email}`} className="hover:text-primary transition-colors">{footerInfo?.email}</a>
-                             </p>
+                             <div className="text-sm space-y-2">
+                                <p>
+                                    <a href={`mailto:${footerInfo?.email}`} className="hover:text-primary transition-colors">{footerInfo?.email}</a>
+                                </p>
+                                <p>
+                                    <a href={`tel:${footerInfo?.phone}`} className="hover:text-primary transition-colors">{footerInfo?.phone}</a>
+                                </p>
+                             </div>
                         </div>
                     </div>
                 </div>

@@ -1,11 +1,14 @@
 import React, { useState, useMemo } from 'react';
-import { Student } from '../../types';
+import { Student, School } from '../../types';
 import RecordPaymentModal from './RecordPaymentModal';
+import PaymentProofsManager from './PaymentProofsManager';
 
 interface FeesManagerProps {
   students: Student[];
-  onUpdate: () => void;
+  onUpdateStudents: () => void;
+  onUpdateSchool: (updatedSchool: School) => void;
   showToast: (message: string) => void;
+  school: School;
 }
 
 const FeeSummaryCard: React.FC<{ title: string; value: string; icon: React.ReactNode }> = ({ title, value, icon }) => (
@@ -21,18 +24,18 @@ const FeeSummaryCard: React.FC<{ title: string; value: string; icon: React.React
 );
 
 
-const FeesManager: React.FC<FeesManagerProps> = ({ students, onUpdate, showToast }) => {
+const FeesManager: React.FC<FeesManagerProps> = ({ students, onUpdateStudents, showToast, school, onUpdateSchool }) => {
     const [managingStudent, setManagingStudent] = useState<Student | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [classFilter, setClassFilter] = useState('all');
     const [statusFilter, setStatusFilter] = useState('all');
-    const [activeTab, setActiveTab] = useState<'all' | 'defaulters'>('all');
+    const [activeTab, setActiveTab] = useState<'all' | 'defaulters' | 'proofs'>('all');
 
     const handleSuccess = () => {
         if (!managingStudent) return;
         showToast(`Fees updated for ${managingStudent.name}.`);
         setManagingStudent(null);
-        onUpdate();
+        onUpdateStudents();
     };
     
     const summaryData = useMemo(() => {
@@ -104,86 +107,91 @@ const FeesManager: React.FC<FeesManagerProps> = ({ students, onUpdate, showToast
                 </div>
             </div>
             
-            {/* Filters and Tabs */}
-            <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <input type="text" placeholder="Search by name or roll no..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm" />
-                    <select value={classFilter} onChange={e => setClassFilter(e.target.value)} className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm">
-                        {uniqueClasses.map(c => <option key={c} value={c}>{c === 'all' ? 'All Classes' : c}</option>)}
-                    </select>
-                    <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm">
-                        <option value="all">All Statuses</option>
-                        <option value="paid">Paid</option>
-                        <option value="unpaid">Unpaid</option>
-                        <option value="partial">Partial</option>
-                    </select>
-                </div>
-            </div>
-
             <div className="border-b border-gray-200 dark:border-gray-700 mb-4">
-                <nav className="-mb-px flex space-x-6" aria-label="Tabs">
+                <nav className="-mb-px flex space-x-6 overflow-x-auto" aria-label="Tabs">
                     <button onClick={() => setActiveTab('all')} className={`${activeTab === 'all' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'} whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm`}>All Students</button>
                     <button onClick={() => setActiveTab('defaulters')} className={`${activeTab === 'defaulters' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'} whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm`}>Defaulters</button>
+                    <button onClick={() => setActiveTab('proofs')} className={`${activeTab === 'proofs' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'} whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm`}>Payment Proofs</button>
                 </nav>
             </div>
 
-
-            {/* Student List Table */}
-            <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead className="bg-gray-50 dark:bg-gray-700">
-                    <tr>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Fee Progress</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Balance</th>
-                        <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
-                        <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Action</th>
-                    </tr>
-                    </thead>
-                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                    {filteredStudents.map((student) => {
-                        const total = student.total_fees || 0;
-                        const paid = student.fees_paid || 0;
-                        const balance = total - paid;
-                        const percentage = total > 0 ? (paid / total) * 100 : (paid > 0 ? 100 : 0);
-
-                        return (
-                            <tr key={student.student_id}>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{student.name}</div>
-                                    <div className="text-xs text-gray-500 dark:text-gray-400">Class: {student.class}</div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="flex items-center">
-                                        <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                                            <div className="bg-secondary h-2.5 rounded-full" style={{width: `${percentage}%`}}></div>
-                                        </div>
-                                        <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">{Math.round(percentage)}%</span>
-                                    </div>
-                                     <div className="text-xs text-gray-500 dark:text-gray-400">
-                                        ₹{paid.toLocaleString()} / ₹{total.toLocaleString()}
-                                    </div>
-                                </td>
-                                <td className={`px-6 py-4 whitespace-nowrap text-sm font-semibold ${balance > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-300'}`}>
-                                    ₹{balance.toLocaleString()}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
-                                    {getFeeStatusPill(student)}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
-                                    <button onClick={() => setManagingStudent(student)} className="px-3 py-1 text-xs bg-primary text-white font-semibold rounded-md shadow-sm hover:bg-primary-hover focus:outline-none">
-                                        Manage
-                                    </button>
-                                </td>
+            {activeTab === 'proofs' ? (
+                <PaymentProofsManager onUpdateStudents={onUpdateStudents} showToast={showToast} />
+            ) : (
+                <>
+                    {/* Filters */}
+                    <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <input type="text" placeholder="Search by name or roll no..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm" />
+                            <select value={classFilter} onChange={e => setClassFilter(e.target.value)} className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm">
+                                {uniqueClasses.map(c => <option key={c} value={c}>{c === 'all' ? 'All Classes' : c}</option>)}
+                            </select>
+                            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm">
+                                <option value="all">All Statuses</option>
+                                <option value="paid">Paid</option>
+                                <option value="unpaid">Unpaid</option>
+                                <option value="partial">Partial</option>
+                            </select>
+                        </div>
+                    </div>
+                    {/* Student List Table */}
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead className="bg-gray-50 dark:bg-gray-700">
+                            <tr>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Fee Progress</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Balance</th>
+                                <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                                <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Action</th>
                             </tr>
-                        )
-                    })}
-                    </tbody>
-                </table>
-                 {filteredStudents.length === 0 && (
-                    <p className="text-center py-8 text-gray-500 dark:text-gray-400">No students match the current filters.</p>
-                )}
-            </div>
+                            </thead>
+                            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            {filteredStudents.map((student) => {
+                                const total = student.total_fees || 0;
+                                const paid = student.fees_paid || 0;
+                                const balance = total - paid;
+                                const percentage = total > 0 ? (paid / total) * 100 : (paid > 0 ? 100 : 0);
+
+                                return (
+                                    <tr key={student.student_id}>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{student.name}</div>
+                                            <div className="text-xs text-gray-500 dark:text-gray-400">Class: {student.class}</div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex items-center">
+                                                <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                                                    <div className="bg-secondary h-2.5 rounded-full" style={{width: `${percentage}%`}}></div>
+                                                </div>
+                                                <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">{Math.round(percentage)}%</span>
+                                            </div>
+                                             <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                ₹{paid.toLocaleString()} / ₹{total.toLocaleString()}
+                                            </div>
+                                        </td>
+                                        <td className={`px-6 py-4 whitespace-nowrap text-sm font-semibold ${balance > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-300'}`}>
+                                            ₹{balance.toLocaleString()}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                                            {getFeeStatusPill(student)}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                                            <button onClick={() => setManagingStudent(student)} className="px-3 py-1 text-xs bg-primary text-white font-semibold rounded-md shadow-sm hover:bg-primary-hover focus:outline-none">
+                                                Manage
+                                            </button>
+                                        </td>
+                                    </tr>
+                                )
+                            })}
+                            </tbody>
+                        </table>
+                         {filteredStudents.length === 0 && (
+                            <p className="text-center py-8 text-gray-500 dark:text-gray-400">No students match the current filters.</p>
+                        )}
+                    </div>
+                </>
+            )}
 
             {managingStudent && (
                 <RecordPaymentModal
